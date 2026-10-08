@@ -1,0 +1,104 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+
+int main()
+{
+    int choice;
+    int sockfd, newsockfd;
+    struct sockaddr_in server, client;
+    char message[100];
+    socklen_t len = sizeof(client);
+
+    printf("===== LAN Communication =====\n");
+    printf("1. Server\n");
+    printf("2. Client\n");
+    printf("Enter your choice: ");
+    scanf("%d", &choice);
+    getchar();
+
+    if (choice == 1)
+    {
+        // Create socket
+        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+
+        server.sin_family = AF_INET;
+        server.sin_port = htons(8080);
+        server.sin_addr.s_addr = INADDR_ANY;
+
+        // Bind socket
+        bind(sockfd, (struct sockaddr *)&server, sizeof(server));
+
+        // Listen for connection
+        listen(sockfd, 5);
+
+        printf("\nServer is waiting for connection...\n");
+
+        // Accept client
+        newsockfd = accept(sockfd,
+                           (struct sockaddr *)&client,
+                           &len);
+
+        printf("Client connected successfully!\n");
+
+        // Receive message
+        recv(newsockfd, message, sizeof(message), 0);
+        printf("Message from Client: %s\n", message);
+
+        // Send message
+        strcpy(message, "Hello Client! LAN connection is successful.");
+        send(newsockfd, message, strlen(message) + 1, 0);
+
+        close(newsockfd);
+        close(sockfd);
+    }
+    else if (choice == 2)
+    {
+        char ip[20];
+
+        printf("Enter Server IP Address: ");
+        scanf("%s", ip);
+
+        // Create socket
+        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+
+        server.sin_family = AF_INET;
+        server.sin_port = htons(8080);
+        inet_pton(AF_INET, ip, &server.sin_addr);
+
+        // Connect to server
+        connect(sockfd,
+                (struct sockaddr *)&server,
+                sizeof(server));
+
+        printf("\nConnected to Server!\n");
+
+        // Send message
+        strcpy(message, "Hello Server!");
+        send(sockfd, message, strlen(message) + 1, 0);
+
+        // Receive response
+        recv(sockfd, message, sizeof(message), 0);
+        printf("Message from Server: %s\n", message);
+
+        close(sockfd);
+    }
+    else
+    {
+        printf("Invalid choice!\n");
+    }
+
+    return 0;
+}
+
+output:
+===== LAN Communication =====
+1. Server
+2. Client
+Enter your choice: 1
+
+Server is waiting for connection...
+Client connected successfully!
+Message from Client: Hello Server!
